@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.nononsenseapps.linksgcm"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="14"
+        android:targetSdkVersion="18" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="com.nononsenseapps.linksgcm.MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <provider
+            android:name="com.nononsenseapps.linksgcm.database.ItemProvider"
+            android:authorities="com.nononsenseapps.linksgcm.database.AUTHORITY"
+            android:exported="false" />
+
+        <service
+            android:name="com.nononsenseapps.linksgcm.AddLinkService"
+            android:exported="false"
+            android:label="@string/add_to_links" >
+        </service>
+
+        <activity
+            android:name="com.nononsenseapps.linksgcm.ShareToActivity"
+            android:label="@string/title_activity_share_to"
+            android:theme="@style/Invisible" >
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
