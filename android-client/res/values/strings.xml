@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Links</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="add_link">Add link</string>
+    <string name="add_link_hint">http://www.google.com</string>
+    <string name="add_to_links">Add to Links</string>
+    <string name="title_activity_share_to">Add to Links</string>
+    <string name="link_added">Link added</string>
+    <string name="delete">Delete</string>
+
+</resources>
