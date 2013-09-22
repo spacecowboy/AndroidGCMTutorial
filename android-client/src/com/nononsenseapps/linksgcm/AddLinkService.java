@@ -1,10 +1,9 @@
 package com.nononsenseapps.linksgcm;
 
-import com.nononsenseapps.linksgcm.database.DatabaseHandler;
-import com.nononsenseapps.linksgcm.database.LinkIDGenerator;
 import com.nononsenseapps.linksgcm.database.LinkItem;
 
 import android.app.IntentService;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.Context;
 
@@ -47,11 +46,8 @@ public class AddLinkService extends IntentService {
 		if (uri == null || uri.isEmpty()) {
 			return;
 		}
-		
-		LinkItem l = new LinkItem();
-		l.sha = LinkIDGenerator.generateID();
-		l.url = uri;
-		
-		DatabaseHandler.getInstance(this).putItem(l);
+		final ContentValues values = new ContentValues();
+		values.put(LinkItem.COL_URL, uri);
+		getContentResolver().insert(LinkItem.URI(), values);
 	}
 }

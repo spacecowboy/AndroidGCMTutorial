@@ -103,10 +103,10 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         return success;
     }
 
-    public synchronized int deleteItem(DBItem item) {
+    public synchronized int deleteItem(LinkItem item) {
         final SQLiteDatabase db = this.getWritableDatabase();
-        final int result = db.delete(item.getTableName(), DBItem.COL_ID
-                + " IS ?", new String[] { Long.toString(item.getId()) });
+        final int result = db.delete(item.getTableName(), LinkItem.COL_SHA
+                + " IS ?", new String[] { item.sha });
 
         if (result > 0) {
             item.notifyProvider(context);

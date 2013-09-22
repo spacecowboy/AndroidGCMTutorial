@@ -8,6 +8,18 @@
         android:minSdkVersion="14"
         android:targetSdkVersion="18" />
 
+    <!-- For connection -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- For getting Google account -->
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <!-- For getting Google account auth token -->
+    <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+
+    <!-- For syncing -->
+    <uses-permission android:name="android.permission.READ_SYNC_STATS" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -40,10 +52,25 @@
             android:theme="@style/Invisible" >
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="text/*" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name="com.nononsenseapps.linksgcm.sync.SyncService"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.content.SyncAdapter"
+                android:resource="@xml/syncadapter" />
+        </service>
+        
     </application>
 
 </manifest>
