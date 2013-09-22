@@ -4,12 +4,14 @@ import sys
 _CREATE_TABLE = \
 """CREATE TABLE IF NOT EXISTS links
   (_id INTEGER PRIMARY KEY,
+  userid TEXT NOT NULL,
   sha TEXT NOT NULL,
   url TEXT NOT NULL,
+  deleted INTEGER NOT NULL DEFAULT 0,
   timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-  UNIQUE(url) ON CONFLICT REPLACE,
-  UNIQUE(sha) ON CONFLICT REPLACE)
+  UNIQUE(userid, url) ON CONFLICT REPLACE,
+  UNIQUE(userid, sha) ON CONFLICT REPLACE)
 """
 
 def init_db(filename='test.db'):
