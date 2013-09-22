@@ -3,16 +3,20 @@ package com.nononsenseapps.linksgcm;
 import java.util.Collection;
 import java.util.HashMap;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.LoaderManager.LoaderCallbacks;
+import android.content.ActivityNotFoundException;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -27,9 +31,13 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.CursorAdapter;
 import android.widget.ListAdapter;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Toast;
 
-import com.nononsenseapps.linksgcm.database.DatabaseHandler;
+import com.google.android.gms.auth.GoogleAuthUtil;
 import com.nononsenseapps.linksgcm.database.LinkItem;
+import com.nononsenseapps.linksgcm.sync.AccountDialog;
+import com.nononsenseapps.linksgcm.sync.GetTokenTask;
+import com.nononsenseapps.linksgcm.sync.SyncHelper;
 
 /**
  * A fragment representing a list of Items.
@@ -65,9 +73,9 @@ public class LinkFragment extends Fragment {
 		super.onCreate(savedInstanceState);
 		setHasOptionsMenu(true);
 		mAdapter = new SimpleCursorAdapter(getActivity(),
-				android.R.layout.simple_list_item_activated_2, null, new String[] {
-						LinkItem.COL_URL, LinkItem.COL_TIMESTAMP }, new int[] {
-						android.R.id.text1, android.R.id.text2 }, 0);
+				R.layout.list_item, null,
+				new String[] { LinkItem.COL_URL, LinkItem.COL_TIMESTAMP },
+				new int[] { android.R.id.text1, android.R.id.text2 }, 0);
 	}
 
 	@Override
@@ -90,14 +98,20 @@ public class LinkFragment extends Fragment {
 		mListView.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
-			public void onItemClick(AdapterView<?> arg0, View arg1, int position,
-					long id) {
-				final LinkItem linkItem = new LinkItem((Cursor) mAdapter.getItem(position));
+			public void onItemClick(AdapterView<?> arg0, View arg1,
+					int position, long id) {
+				final LinkItem linkItem = new LinkItem((Cursor) mAdapter
+						.getItem(position));
+				try {
 				Intent i = new Intent(Intent.ACTION_VIEW);
 				i.setData(Uri.parse(linkItem.url));
 				startActivity(i);
-			}});
-		
+				} catch (ActivityNotFoundException e) {
+					Toast.makeText(getActivity(), R.string.no_app_can_open_this, Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
+
 		mListView.setMultiChoiceModeListener(new MultiChoiceModeListener() {
 
 			HashMap<Long, LinkItem> links = new HashMap<Long, LinkItem>();
@@ -160,8 +174,8 @@ public class LinkFragment extends Fragment {
 			@Override
 			public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 				return new CursorLoader(getActivity(), LinkItem.URI(),
-						LinkItem.FIELDS, null, null, LinkItem.COL_TIMESTAMP
-								+ " DESC");
+						LinkItem.FIELDS, LinkItem.COL_DELETED + " IS 0", null,
+						LinkItem.COL_TIMESTAMP + " DESC");
 			}
 
 			@Override
@@ -177,11 +191,10 @@ public class LinkFragment extends Fragment {
 
 		return view;
 	}
-	
+
 	void deleteItems(Collection<LinkItem> items) {
-		final DatabaseHandler db = DatabaseHandler.getInstance(getActivity());
-		for (LinkItem item: items) {
-			db.deleteItem(item);
+		for (LinkItem item : items) {
+			getActivity().getContentResolver().delete(item.getUri(), null, null);
 		}
 	}
 
@@ -202,6 +215,33 @@ public class LinkFragment extends Fragment {
 		case R.id.action_add:
 			showAddDialog();
 			break;
+		case R.id.action_sync:
+			final String email = PreferenceManager.getDefaultSharedPreferences(
+					getActivity()).getString(SyncHelper.KEY_ACCOUNT, null);
+			if (email != null) {
+				Toast.makeText(getActivity(), R.string.syncing_, Toast.LENGTH_SHORT).show();
+				SyncHelper.manualSync(getActivity());
+			}
+			else {
+				getFragmentManager().beginTransaction()
+						.add(R.id.mainContent, new LinkFragment()).commit();
+
+				if (null == SyncHelper.getSavedAccountName(getActivity())) {
+					final Account[] accounts = AccountManager.get(getActivity())
+							.getAccountsByType(
+									GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE);
+
+					if (accounts.length == 1) {
+						new GetTokenTask((MainActivity) getActivity(), accounts[0].name,
+								SyncHelper.SCOPE).execute();
+					}
+					else if (accounts.length > 1) {
+						DialogFragment dialog = new AccountDialog();
+						dialog.show(getFragmentManager(), "account_dialog");
+					}
+				}
+			}
+			break;
 		}
 		return result;
 	}
@@ -210,4 +250,5 @@ public class LinkFragment extends Fragment {
 		DialogFragment dialog = new DialogAddLink();
 		dialog.show(getFragmentManager(), "add_link");
 	}
+
 }

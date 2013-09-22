@@ -23,15 +23,17 @@ public class LinkItem extends DBItem {
     public static final String COL_SHA = "sha";
     public static final String COL_URL = "url";
     public static final String COL_TIMESTAMP = "timestamp";
+    public static final String COL_DELETED = "deleted";
     public static final String COL_SYNCED = "synced";
 
     // For database projection so order is consistent
-    public static final String[] FIELDS = { COL__ID, COL_SHA, COL_URL, COL_TIMESTAMP, COL_SYNCED };
+    public static final String[] FIELDS = { COL__ID, COL_SHA, COL_URL, COL_TIMESTAMP, COL_DELETED, COL_SYNCED };
 
     public long _id = -1;
     public String sha;
     public String url;
     public String timestamp = null;
+    public long deleted = 0;
     public long synced = 0;
 
     public static final int BASEURICODE = 0x3b109c7;
@@ -56,7 +58,8 @@ public class LinkItem extends DBItem {
         this.sha = cursor.getString(1);
         this.url = cursor.getString(2);
         this.timestamp = cursor.getString(3);
-        this.synced = cursor.getLong(4);
+        this.deleted = cursor.getLong(4);
+        this.synced = cursor.getLong(5);
     }
 
     public ContentValues getContent() {
@@ -65,6 +68,7 @@ public class LinkItem extends DBItem {
         values.put(COL_SHA, sha);
         values.put(COL_URL, url);
         if (timestamp != null) values.put(COL_TIMESTAMP, timestamp);
+        values.put(COL_DELETED, deleted);
         values.put(COL_SYNCED, synced);
 
         return values;
@@ -92,8 +96,9 @@ public class LinkItem extends DBItem {
 +"  sha TEXT NOT NULL,"
 +"  url TEXT NOT NULL,"
 +"  timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
++"  deleted INTEGER NOT NULL DEFAULT 0,"
 +"  synced INTEGER NOT NULL DEFAULT 0,"
 +""
-+"  UNIQUE (url) ON CONFLICT REPLACE,"
-+"  UNIQUE (sha) ON CONFLICT REPLACE)";
++"  UNIQUE (url) ON CONFLICT IGNORE,"
++"  UNIQUE (sha) ON CONFLICT IGNORE)";
 }

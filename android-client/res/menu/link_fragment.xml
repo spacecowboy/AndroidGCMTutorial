@@ -5,5 +5,11 @@
         android:orderInCategory="100"
         android:showAsAction="ifRoom"
         android:title="@string/add_link"/>
+    
+        <item
+        android:id="@+id/action_sync"
+        android:orderInCategory="101"
+        android:showAsAction="ifRoom"
+        android:title="@string/sync"/>
 
 </menu>

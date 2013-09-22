@@ -10,5 +10,9 @@
     <string name="title_activity_share_to">Add to Links</string>
     <string name="link_added">Link added</string>
     <string name="delete">Delete</string>
+    <string name="select_account">Select account</string>
+    <string name="sync">Sync</string>
+    <string name="syncing_">Syncing...</string>
+    <string name="no_app_can_open_this">No app can open this</string>
 
 </resources>

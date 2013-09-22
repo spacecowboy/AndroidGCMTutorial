@@ -46,7 +46,7 @@ public class DialogAddLink extends DialogFragment {
 
 					@Override
 					public void onClick(View v) {
-						final String uri = uriText.getText().toString();
+						final String uri = uriText.getText().toString().trim();
 						if (!uri.isEmpty()) {
 							// Add in background
 							AddLinkService.addLink(getActivity(), uri);
