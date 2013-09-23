@@ -4,6 +4,7 @@ import retrofit.RetrofitError;
 
 import com.nononsenseapps.linksgcm.database.DatabaseHandler;
 import com.nononsenseapps.linksgcm.database.LinkItem;
+import com.nononsenseapps.linksgcm.gcm.GCMHelper;
 import com.nononsenseapps.linksgcm.sync.LinksServer.LinkItems;
 
 import android.accounts.Account;
@@ -51,7 +52,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 						.commit();
 			}
 			// token should be good. Transmit
-
+			
+			// Register for GCM if we need to
+			GCMHelper.registerIfNotAlreadyDone(getContext());
+			
 			final LinksServer server = SyncHelper.getRESTAdapter();
 			DatabaseHandler db = DatabaseHandler.getInstance(getContext());
 
@@ -60,12 +64,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 					+ " IS 0 OR " + LinkItem.COL_DELETED + " IS 1", null, null)) {
 				if (item.deleted != 0) {
 					// Delete the item
-					server.deleteLink(token, item.sha);
+					server.deleteLink(token, item.sha, GCMHelper.getSavedRegistrationId(getContext()));
 					syncResult.stats.numDeletes++;
 					db.deleteItem(item);
 				}
 				else {
-					server.addLink(token, item);
+					server.addLink(token, item, GCMHelper.getSavedRegistrationId(getContext()));
 					syncResult.stats.numInserts++;
 					item.synced = 1;
 					db.putItem(item);

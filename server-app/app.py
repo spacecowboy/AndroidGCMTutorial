@@ -1,13 +1,11 @@
-from hashlib import sha1
+import os, binascii
 from dateutil import parser as dateparser
 from bottle import run, get, post, delete, install, HTTPError, request
 from bottle_sqlite import SQLitePlugin
-
 from dbsetup import init_db
-
 from google_auth import gauth
-
-DBNAME='test.db'
+from app_conf import DBNAME
+from app_gcm import send_link
 
 init_db(DBNAME)
 install(SQLitePlugin(dbfile=DBNAME))
@@ -65,6 +63,8 @@ def get_link(db, sha, userid):
 
     return HTTPError(404, "No such item")
 
+
+
 @delete('/links/<sha>')
 def delete_link(db, sha, userid):
     '''Deletes a specific link from the list.
@@ -72,7 +72,14 @@ def delete_link(db, sha, userid):
     db.execute('UPDATE links SET deleted = 1, timestamp = CURRENT_TIMESTAMP \
     WHERE sha IS ? AND userid is ?', [sha, userid])
 
-    #if db.total_changes > 0:
+    if db.total_changes > 0:
+        # Regid is optional to provide from the client
+        # If present, it will not receive a GCM msg
+        regid = None
+        if 'regid' in request.query:
+            regid = request.query['regid']
+        send_link(userid, sha, regid)
+
     return {}
     #return HTTPError(404, "No such item")
 
@@ -89,7 +96,7 @@ def add_link(db, userid):
 
     # Sha is optional, generate if not present
     if 'sha' not in request.json:
-        request.json['sha'] = sha1(request.json['url']).hexdigest()
+        request.json['sha'] = binascii.b2a_hex(os.urandom(15))
 
     args = [userid,
             request.json['url'],
@@ -98,8 +105,35 @@ def add_link(db, userid):
 
     db.execute(stmt, args)
 
+    if db.total_changes > 0:
+        # Regid is optional to provide from the client
+        # If present, it will not receive a GCM msg
+        regid = None
+        if 'regid' in request.query:
+            regid = request.query['regid']
+        send_link(userid, request.json['sha'], regid)
+
     return get_link(db, request.json['sha'], userid)
 
+
+@post('/registergcm')
+def add_link(db, userid):
+    '''Adds a registration id for a user to the database.
+    Returns nothing.'''
+    if 'application/json' not in request.content_type:
+        return HTTPError(415, "Only json is accepted")
+    # Check required fields
+    if ('regid' not in request.json or request.json['regid'] is None
+        or len(request.json['regid']) < 1):
+        return HTTPError(400, "Must specify a registration id")
+
+    db.execute('INSERT INTO gcm (userid, regid) VALUES(?, ?)',
+               [userid, request.json['regid']])
+
+    if db.total_changes > 0:
+        return {}
+    else:
+        return HTTPError(500, "Adding regid to DB failed")
 
 if __name__ == '__main__':
     # Restart server automatically when this file changes

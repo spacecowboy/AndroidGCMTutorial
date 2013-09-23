@@ -20,7 +20,11 @@ public interface LinksServer {
 		String latestTimestamp;
 		List<LinkItem> links;
 	}
-	
+
+	public static class RegId {
+		public String regid;
+	}
+
 	public static class Dummy {
 		// Methods must have return type
 	}
@@ -34,8 +38,13 @@ public interface LinksServer {
 	LinkItem getLink(@Header("Bearer") String token, @Path("sha") String sha);
 
 	@DELETE("/links/{sha}")
-	Dummy deleteLink(@Header("Bearer") String token, @Path("sha") String sha);
+	Dummy deleteLink(@Header("Bearer") String token, @Path("sha") String sha,
+			@Query("regid") String regid);
 
 	@POST("/links")
-	LinkItem addLink(@Header("Bearer") String token, @Body LinkItem item);
+	LinkItem addLink(@Header("Bearer") String token, @Body LinkItem item,
+			@Query("regid") String regid);
+
+	@POST("/registergcm")
+	Dummy registerGCM(@Header("Bearer") String token, @Body RegId regid);
 }

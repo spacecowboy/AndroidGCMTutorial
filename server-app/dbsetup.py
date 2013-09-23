@@ -1,5 +1,6 @@
 import sqlite3 as sql
 import sys
+from app_conf import DBNAME
 
 _CREATE_TABLE = \
 """CREATE TABLE IF NOT EXISTS links
@@ -14,12 +15,22 @@ _CREATE_TABLE = \
   UNIQUE(userid, sha) ON CONFLICT REPLACE)
 """
 
-def init_db(filename='test.db'):
+_CREATE_GCM_TABLE = \
+"""CREATE TABLE IF NOT EXISTS gcm
+  (_id INTEGER PRIMARY KEY,
+  userid TEXT NOT NULL,
+  regid TEXT NOT NULL,
+
+  UNIQUE(userid, regid) ON CONFLICT REPLACE)
+"""
+
+def init_db(filename=DBNAME):
     con = sql.connect(filename)
     con.row_factory = sql.Row
     with con:
         cur = con.cursor()
         cur.execute(_CREATE_TABLE)
+        cur.execute(_CREATE_GCM_TABLE)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
