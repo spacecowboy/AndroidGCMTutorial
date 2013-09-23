@@ -92,9 +92,22 @@ public class SyncHelper {
 				// This will force a sync regardless of what the setting is
 				// in accounts manager. Only use it here where the user has
 				// manually desired a sync to happen NOW.
-				// options.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+				options.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
 				ContentResolver.requestSync(account, ItemProvider.AUTHORITY,
 						options);
+			}
+		}
+	}
+
+	public static void requestSync(final Context context) {
+		final String email = getSavedAccountName(context);
+
+		if (email != null) {
+			final Account account = getAccount(context, email);
+
+			if (!ContentResolver.isSyncActive(account, ItemProvider.AUTHORITY)) {
+				ContentResolver.requestSync(account, ItemProvider.AUTHORITY,
+						new Bundle());
 			}
 		}
 	}

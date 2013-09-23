@@ -56,7 +56,11 @@ public interface LinksServer {
 			return item;
 		}
 	}
-	
+
+	public static class RegId {
+		public String regid;
+	}
+
 	public static class Dummy {
 		// Methods must have return type
 	}
@@ -70,8 +74,13 @@ public interface LinksServer {
 	LinkMSG getLink(@Header("Authorization") String token, @Path("sha") String sha);
 
 	@DELETE("/links/{sha}")
-	Dummy deleteLink(@Header("Authorization") String token, @Path("sha") String sha);
+	Dummy deleteLink(@Header("Authorization") String token, @Path("sha") String sha,
+			@Query("regid") String regid);
 
 	@POST("/links")
-	LinkMSG addLink(@Header("Authorization") String token, @Body LinkMSG item);
+	LinkMSG addLink(@Header("Authorization") String token, @Body LinkMSG item,
+			@Query("regid") String regid);
+
+	@POST("/registergcm")
+	Dummy registerGCM(@Header("Authorization") String token, @Body RegId regid);
 }

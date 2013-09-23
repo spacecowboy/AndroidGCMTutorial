@@ -1,0 +1,3 @@
+the server needs python-gcm. Install with:
+
+    pip install python-gcm
