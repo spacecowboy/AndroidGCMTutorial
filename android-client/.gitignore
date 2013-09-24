@@ -2,3 +2,4 @@
 build.xml
 bin
 gen
+secret.properties
