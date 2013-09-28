@@ -1,5 +1,5 @@
 ## Basic app
-__SHA1__: 8e1146e3f53f8
+__SHA1__: 92e4ed4383b4
 
 This is not a tutorial in making apps in general, so the starting point
 is a working local-only app. No synchronization or network connectivity
@@ -12,7 +12,7 @@ to add links easily and quickly.
 <img src="../img/add.png" width="50%" height="50%"/>
 
 ## Adding synchronization with a SyncAdapter
-__SHA1__: b9f8624fa038f0
+__SHA1__: fc7d7aa9550b
 
 Synchronization needs to be done on a background thread. One could use an
 AsyncTask, but we are going to go all the way and a SyncAdapter here instead.
@@ -103,7 +103,7 @@ as the rest is just short boilerplate:
 					db.deleteItem(item);
 				}
 				else {
-					server.addLink(token, item);
+					server.addLink(token, new LinkMSG(item));
 					syncResult.stats.numInserts++;
 					item.synced = 1;
 					db.putItem(item);
@@ -126,13 +126,14 @@ as the rest is just short boilerplate:
 				}
 
 				if (items != null && items.links != null) {
-					for (LinkItem item : items.links) {
-						if (item.deleted == 0) {
-							item.synced = 1;
-							db.putItem(item);
+					for (LinkMSG msg : items.links) {
+						final LinkItem item = msg.toDBItem();
+						if (msg.deleted) {
+							db.deleteItem(item);
 						}
 						else {
-							db.deleteItem(item);
+							item.synced = 1;
+							db.putItem(item);
 						}
 					}
 				}
@@ -208,7 +209,7 @@ public class SyncHelper {
 	public static String getAuthToken(final Context context,
 			final String accountName) {
 		try {
-			return GoogleAuthUtil.getTokenWithNotification(context,
+			return "Bearer " + GoogleAuthUtil.getTokenWithNotification(context,
 					accountName, SCOPE, null, ItemProvider.AUTHORITY, null);
 		}
 		catch (UserRecoverableNotifiedException userRecoverableException) {
@@ -278,11 +279,51 @@ __LinksServer.java:__
 ```java
 public interface LinksServer {
 
-	public static final String API_URL = "http://links.nononsenseapps.com";
+	/**
+	 * Change the IP to the address of your server
+	 */
+	// Server-app uses no prefixes in the URL
+	public static final String API_URL = "http://192.168.1.17:5500";
+	// Server on App Engine will have a Base URL like this
+	//public static final String API_URL = "http://192.168.1.17:8080/_ah/api/links/v1";
 
 	public static class LinkItems {
 		String latestTimestamp;
-		List<LinkItem> links;
+		List<LinkMSG> links;
+	}
+
+	/**
+	 * We could have used LinkItem class directly instead.
+	 * But to make it compatible with both servers, I chose
+	 * to make this converter class to handle the deleted field.
+	 * Converting the integer to boolean for the JSON message.
+	 */
+	public static class LinkMSG {
+		String url;
+		String sha;
+		boolean deleted;
+		String timestamp;
+
+		public LinkMSG(LinkItem link) {
+			url = link.url;
+			sha = link.sha;
+			deleted = (link.deleted == 1);
+		}
+
+		public LinkItem toDBItem() {
+			final LinkItem item = new LinkItem();
+			item.url = url;
+			item.sha = sha;
+			item.timestamp = timestamp;
+			if (deleted) {
+				item.deleted = 1;
+			}
+			return item;
+		}
+	}
+
+	public static class RegId {
+		public String regid;
 	}
 
 	public static class Dummy {
@@ -290,25 +331,27 @@ public interface LinksServer {
 	}
 
 	@GET("/links")
-	LinkItems listLinks(@Header("Bearer") String token,
+	LinkItems listLinks(@Header("Authorization") String token,
 			@Query("showDeleted") String showDeleted,
 			@Query("timestampMin") String timestampMin);
 
 	@GET("/links/{sha}")
-	LinkItem getLink(@Header("Bearer") String token, @Path("sha") String sha);
+	LinkMSG getLink(@Header("Authorization") String token, @Path("sha") String sha);
 
 	@DELETE("/links/{sha}")
-	Dummy deleteLink(@Header("Bearer") String token, @Path("sha") String sha);
+	Dummy deleteLink(@Header("Authorization") String token, @Path("sha") String sha);
 
 	@POST("/links")
-	LinkItem addLink(@Header("Bearer") String token, @Body LinkItem item);
-}
+	LinkMSG addLink(@Header("Authorization") String token, @Body LinkMSG item);
 ```
 
 You define an interface, and the library takes care of building an
-actual object that talks to the server. Note that because the database
-object _LinkItem_ has public fields, we can use it directly in this
-interface. This is seriously __ALL__ the code required to talk
+actual object that talks to the server.
+We could have used _LinkItem_ directly as the message class because
+it has public fields, but I want to convert the _deleted_ field
+to a boolean to maintain compatibility between both the regular
+server and the app-engine version.
+This is seriously __ALL__ the code required to talk
 with a rest server. Notice also that the definitions match those
 in the server.
 
@@ -329,7 +372,7 @@ That's where _GCM_ comes in.
 
 
 ## Adding GCM
-__SHA1:__ 94011e7b6d21f
+__SHA1:__ 2448515e2ed2a
 
 CloudMessaging is the final piece of our networked app. By using _GCM_,
 the server can pass a message to Google, and ask it to relay it to the
@@ -496,7 +539,9 @@ public class GCMIntentService extends IntentService {
 				link.timestamp = extras.getString("timestamp");
 				link.url = extras.getString("url");
 				link.synced = 1;
-				link.deleted = Integer.parseInt(extras.getString("deleted", "0"));
+				if (Boolean.parseBoolean(extras.getString("deleted", "false"))) {
+					link.deleted = 1;
+				}
 
 				if (link.deleted == 0) {
 					DatabaseHandler.getInstance(this).putItem(link);
@@ -537,3 +582,6 @@ present in _com.nononsenseapps.linksgcm.database_.
 in _com.nononsenseapps.linksgcm.sync_.
 * Receiving messages from other devices through GCM is handled
 in _com.nononsenseapps.linksgcm.gcm_
+
+## RetroFit VS Google's App Engine client
+generated bullshit

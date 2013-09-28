@@ -104,7 +104,7 @@ if __name__ == '__main__':
 ```
 
 ## Adding a database
-__SHA1:__ 599d6fda70fbeaa
+__SHA1:__ 7e193b5579483
 
 Getting the skeleton up was really fast and now it's already
 time to implement some real data.
@@ -174,7 +174,8 @@ def to_dict(row):
     return dict(sha=row['sha'],
                 url=row['url'],
                 timestamp=row['timestamp'],
-                deleted=row['deleted'])
+                # Convert integer to boolean
+                deleted=(1 == row['deleted']))
 
 @get('/')
 @get('/links')
@@ -198,11 +199,10 @@ def get_link(db, sha):
 def delete_link(db, sha):
     '''Deletes a specific link from the list.
     On success, returns an empty response'''
-    db.execute('DELETE FROM links WHERE sha IS ?', [sha])
-    if db.total_changes > 0:
-        return {}
+    db.execute('UPDATE links SET deleted = 1, timestamp = CURRENT_TIMESTAMP \
+    WHERE sha IS ? AND userid is ?', [sha, userid])
 
-    return HTTPError(404, "No such item")
+    return {}
 
 @post('/links')
 def add_link(db):
@@ -236,7 +236,7 @@ if __name__ == '__main__':
     run(host='0.0.0.0', port=5500, reloader=True, debug=True)
 ```
 
-Wow. That was fairly straightforward. The one thing that is
+That was fairly straightforward. The one thing that is
 missing is a requirement to login. We can also tweak some
 things like the get all method. We can limit the necessary
 bandwidth by restricting not necessarily including deleted
@@ -252,7 +252,7 @@ link. I want the server to generate a new timestamp for each
 link for this specific purpose.
 
 ## Adding Google authentication and users
-__SHA1:__ 70f66d125ff57
+__SHA1:__ e4c340b30155a
 
 To make sure we don't mix user's data, we have a column in
 the database that will hold the username, e.g. their e-mail.
@@ -299,7 +299,7 @@ def validate_token(access_token):
     h = Http()
     resp, cont = h.request("https://www.googleapis.com/oauth2/v2/userinfo",
                            headers={'Host':'www.googleapis.com',
-                                    'Authorization':'Bearer {}'.format(access_token)})
+                                    'Authorization':access_token})
 
     if not resp['status'] == '200':
         return None
@@ -318,10 +318,10 @@ def gauth(fn):
     bottle.install(guath)"""
 
     def _wrap(*args, **kwargs):
-        if 'Bearer' not in request.headers:
+        if 'Authorization' not in request.headers:
             return HTTPError(401, 'Unauthorized')
 
-        userid = validate_token(request.headers['Bearer'])
+        userid = validate_token(request.headers['Authorization'])
         if userid is None:
             return HTTPError(401, "Unauthorized")
 
@@ -341,29 +341,6 @@ But, we also have to add the _userid_ parameter to the methods, as well
 as actually handle it:
 
 ```python
-import os, binascii
-from dateutil import parser as dateparser
-from bottle import run, get, post, delete, install, HTTPError, request
-from bottle_sqlite import SQLitePlugin
-
-from dbsetup import init_db
-
-from google_auth import gauth
-
-DBNAME='test.db'
-
-init_db(DBNAME)
-install(SQLitePlugin(dbfile=DBNAME))
-
-install(gauth)
-
-def to_dict(row):
-    return dict(sha=row['sha'],
-                url=row['url'],
-                timestamp=row['timestamp'],
-                deleted=row['deleted'])
-
-
 @get('/')
 @get('/links')
 def list_links(db, userid):
@@ -415,9 +392,7 @@ def delete_link(db, sha, userid):
     db.execute('UPDATE links SET deleted = 1, timestamp = CURRENT_TIMESTAMP \
     WHERE sha IS ? AND userid is ?', [sha, userid])
 
-    #if db.total_changes > 0:
     return {}
-    #return HTTPError(404, "No such item")
 
 @post('/links')
 def add_link(db, userid):
@@ -453,7 +428,7 @@ The methods are only executed if the supplied auth token was valid, else
 an _Unauthorized_ exception is thrown.
 
 ## Adding GCM
-__SHA1:__ 94011e7b6d21f4
+__SHA1:__ 2448515e2ed2
 
 CloudMessaging is the final piece of our networked app. By using GCM,
 the server can pass a message to Google, and ask it to relay it to the
@@ -555,7 +530,8 @@ def to_dict(row):
     return dict(sha=row['sha'],
                 url=row['url'],
                 timestamp=row['timestamp'],
-                deleted=row['deleted'])
+                # Convert integer to boolean
+                deleted=(1 == row['deleted']))
 
 def async(func):
     """
@@ -614,6 +590,9 @@ def send_link(userid, sha, excludeid=None):
             reg_ids.remove(excludeid)
         except ValueError:
             pass # not in list, or None
+
+    if len(reg_ids) < 1:
+        return
 
     print("Sending to:", len(reg_ids))
     _send(userid, reg_ids, data)

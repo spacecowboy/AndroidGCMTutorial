@@ -4,8 +4,11 @@
 to a server-side app.
 2. Learn how to make a server-side app with a __REST__ interface and
 connections to GCM.
+3. Be able to deploy the server to Google App Engine.
 
-This project is divided into two parts: the Android client and the server app.
+This project is divided into two (three) parts:
+the Android client and the server app (and a version of the server
+suitable for App Engine).
 My own motivations for this project is to learn how to make a server side
 app. I already know how to make Android apps but know very little about
 web programming. So this will be outside of my comfort zone. I have used
@@ -48,9 +51,9 @@ the _GCM_ bits, so it's not that weird that it doesn't go into newbie
 hints on application servers. But no one else seems to do that either.
 Another thing is that there are a ton of documents that are out-dated.
 
-For example, stay away from all server-libraries developed by Google.
-The Java versions might be good, but the Python versions __SUCK DONKEY BALLS__.
-Python __IS NOT AN EXCUSE TO USE GLOBAL VARIABLES ****ING EVERYWHERE__.
+In my opinion it is best to  stay away from libraries developed by Google,
+whenever possible. They build good frameworks but the libraries are just
+not user friendly.
 
 In short, I will attempt to deliver both the
 _big picture_ and the _nitty gritty details_ in this project that no one
@@ -116,7 +119,7 @@ that would show what was added to enable authentication
 with Google in the server-app:
 
 ```shell
-git diff 599d6fda70f 94011e7b6d2 server-app/app.py server-app/google_auth.py
+git diff 92e4ed4383b4a6 e4c340b30155 server-app/app.py server-app/google_auth.py
 ```
 
 ## Requirements
@@ -144,21 +147,36 @@ https://code.google.com/apis/console/#project:8646666293:access
 
 Where _8646666293_ is your project number.
 
+### Android app
+In this folder I implement an android app. This will be fairly straightforward.
+Have a look in _android-client_ for that.
+
 ### Server app
 In this folder I construct an app we can deploy on a webserver somewhere.
 Go into the _server-app_ folder and see how that's done.
 
 The server is coded in _Python_ because _Java_ is mostly bloat.
 
-### Android app
-In this folder I implement an android app. This will be fairly straightforward.
-Have a look in _android-client_ for that.
+### Google App Engine
+I have also made a version of the server which can be deployed to
+[App Engine](https://appengine.google.com)
+
+A few tweaks were necessary for it to function, but structurally
+it is almost the same as the regular server.
 
 ## Result
 You can download the finished app and try it out for yourself here:
 
-[apk file](https://github.com/spacecowboy/AndroidGCMTutorial/releases/download/v1.0/AndroidLinksGCM-release.apk)
+[Releases](https://github.com/spacecowboy/AndroidGCMTutorial/releases)
 
-It connects to a running version of the server-app. And looks like this:
+There are two versions to choose from. One connects to a running version
+of the server on a computer controlled by me. The other connects to
+a version of the app engine server, running on app engine.
+
+It looks like this:
 
 <img src="img/list.png" width="50%" height="50%"/>
+
+As a side note, you can experiment with the server running on App Engine
+by using the
+[API Explorer](http://esoteric-storm-343.appspot.com/_ah/api/explorer).
