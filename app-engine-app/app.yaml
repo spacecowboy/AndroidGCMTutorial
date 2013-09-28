@@ -1,0 +1,16 @@
+application: esoteric-storm-343
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /_ah/spi/.*
+  script: app.application
+
+libraries:
+- name: endpoints
+  version: 1.0
+# Needed for endpoints/users_id_token.py.
+- name: pycrypto
+  version: "2.6"
