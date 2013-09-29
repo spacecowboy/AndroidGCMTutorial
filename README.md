@@ -180,3 +180,12 @@ It looks like this:
 As a side note, you can experiment with the server running on App Engine
 by using the
 [API Explorer](http://esoteric-storm-343.appspot.com/_ah/api/explorer).
+
+## If you have questions or feedback
+You can contact me by e-mail. If you find some part of the tutorial
+hard to understand or want something clarified, you can also
+[create an issue](https://github.com/spacecowboy/AndroidGCMTutorial/issues).
+The same goes if you find an error. As I said, I am sort of unfamiliar
+with App Engine and server side stuff at the time I'm writing this, so
+there might very well be mistakes. Do the Internet a favor and report
+them if you find any.

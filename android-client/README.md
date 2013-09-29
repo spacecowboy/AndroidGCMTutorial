@@ -1,3 +1,30 @@
+## Requirements
+To build the client you need to configure the project to include
+the _Play Services library_ in the _Android SDK_.
+
+This page explains it clearly: [http://developer.android.com/google/play-services/setup.html](http://developer.android.com/google/play-services/setup.html)
+
+## Makefile
+I have included a _Makefile_ so you can easily build the project from the
+commandline. You need to configure _ant_ to point to your sdk-directory
+to use it though. Being in the android-client directory, you do the
+following:
+
+
+    /path/to/sdk/tools/android update project -p .
+
+Then you can do this to build the project:
+
+    make debug
+
+The advantage of make is that you can chain commands, like so:
+
+    make debug installd run
+
+That would build and install the debug version and then run the app
+on your device/emulator.
+
+
 ## Basic app
 __SHA1__: 92e4ed4383b4
 
@@ -583,5 +610,65 @@ in _com.nononsenseapps.linksgcm.sync_.
 * Receiving messages from other devices through GCM is handled
 in _com.nononsenseapps.linksgcm.gcm_
 
-## RetroFit VS Google's App Engine client
-generated bullshit
+## RetroFit VS Google's endpoint client libraries
+I have made two servers for this app, one suitable for running
+on any computer and one suitable for deployment to App Engine.
+The client will work with either of them, all you need to do
+is configure the URL in
+[LinksServer.java](https://github.com/spacecowboy/AndroidGCMTutorial/blob/master/android-client/src/com/nononsenseapps/linksgcm/sync/LinksServer.java).
+Which incidently is all the client side code specific to your
+server, running on App Engine or not.
+
+Now compare that to what Google recommends in
+[here for example](https://developers.google.com/eclipse/docs/endpoints-addentities)
+for apps talking to endpoints on App Engine (which this app does, if you
+run the app engine server).
+They start you off with defining a simple class to represent your data,
+like we did with Retrofit. _But then_ you need to generate Endpoint classes.
+
+The end result of which can be seen
+in the code for the TicTacToe example at
+[GitHub.](https://github.com/GoogleCloudPlatform/appengine-endpoints-tictactoe-android/tree/master/src/com/google/api/services/tictactoe)
+
+That's way __too complicated__ for the simple purposes of most apps! Look
+at the sheer amount of libs you need to include in your project for
+this to actually work:
+
+* google-api-client-1.12.0-beta.jar
+* google-api-client-android-1.12.0-beta.jar
+* google-http-client-1.12.0-beta.jar
+* google-http-client-android-1.12.0-beta.jar
+* google-http-client-gson-1.12.0-beta.jar
+* google-oauth-client-1.12.0-beta.jar
+* gson-2.1.jar
+* guava-jdk5-13.0.jar
+* jsr305-1.3.9.jar
+
+The guide then goes on talking about using AsyncTasks and stuff. Don't
+listen to them! Use a SyncAdapter and live a happy life instead. I don't
+mean that AsyncTasks are bad, they serve a very important purpose. But
+if you're implementing synchronization for data that doesn't update
+in absolute realtime (e.g. apps which aren't games),
+then it makes all the sense
+in the world to use a SyncAdapter because it ultimately makes your life
+that much easier.
+
+Now compare that to the solution with Retrofit that I use here. You only
+need the following libs:
+
+* retrofit-1.2.2.jar
+* gson-2.2.4.jar
+* okhttp-1.2.1-jar-with-dependencies.jar
+
+Where the last one isn't strictly necessary, retrofit only uses it it's
+available, else it falls back to the built in http-classes
+(if I understood correctly).
+The code client side to connect with your service is short and easy:
+[LinksServer.java](https://github.com/spacecowboy/AndroidGCMTutorial/blob/master/android-client/src/com/nononsenseapps/linksgcm/sync/LinksServer.java).
+And there is _no_ generating of additional libraries.
+
+It's ultimately up to you of course, but I found the Retrofit solution
+way easier to understand, implement and use. The fact that I can use
+the same code for server running on any computer, and not just
+App Engine is a huge plus for me because it gives me a choice. One
+that I don't have to make until scaling becomes an issue.
