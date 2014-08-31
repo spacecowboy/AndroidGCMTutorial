@@ -601,7 +601,7 @@ in a local database. An incredibly boring app if weren't for the
 fact that it keeps that database synchronized across all of your
 devices. Structure of the app is as follows:
 
-* Code relevant for the app, like it UI and such are present in
+* Code relevant for the app, like its UI and such, is present in
 the package _com.nononsenseapps.linksgcm_.
 * Data is stored in a database, which is handled by the classes
 present in _com.nononsenseapps.linksgcm.database_.
